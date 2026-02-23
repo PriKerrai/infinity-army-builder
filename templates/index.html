@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="sv">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steel Phalanx Army Builder</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="theme-{{ selected_army }}">
+    <!-- Header -->
+    <div class="main-header">
+        <h1>🛡️ Infinity Army Builder</h1>
+
+        <div class="army-picker">
+            <span class="muted">Army:</span>
+            <select id="armySelector" onchange="changeArmy()" title="Välj armé">
+                <option value="aleph" {{ 'selected' if selected_army=='aleph' else '' }}>ALEPH (vanilla)</option>
+                <option value="steel" {{ 'selected' if selected_army=='steel' else '' }}>Steel Phalanx</option>
+                <option value="yujing" {{ 'selected' if selected_army=='yujing' else '' }}>Yu Jing (vanilla)</option>
+                <option value="whitebanner" {{ 'selected' if selected_army=='whitebanner' else '' }}>White Banner
+                </option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <input type="text" id="searchInput" placeholder="🔍 Sök enhet..." oninput="applyFilters()">
+
+        <select id="categoryFilter" onchange="applyFilters()">
+            <option value="">Classification</option>
+            {% for cat_id, cat_name in category_map.items() %}
+            <option value="{{ cat_id }}">{{ cat_name }}</option>
+            {% endfor %}
+        </select>
+
+        <select id="skillFilter" onchange="applyFilters()">
+            <option value="">Skills</option>
+        </select>
+
+        <select id="equipFilter" onchange="applyFilters()">
+            <option value="">Equipment</option>
+        </select>
+
+        <select id="weaponFilter" onchange="applyFilters()">
+            <option value="">Weapons</option>
+        </select>
+
+        <select id="ownedFilter" onchange="applyFilters()">
+            <option value="all">Alla enheter</option>
+            <option value="owned">Bara ägda</option>
+            <option value="not-owned">Bara icke-ägda</option>
+        </select>
+
+        <select id="sortFilter" onchange="applyFilters()">
+            <option value="name-asc">Namn (A-Z)</option>
+            <option value="name-desc">Namn (Z-A)</option>
+            <option value="owned-first">Ägda först</option>
+            <option value="not-owned-first">Icke-ägda först</option>
+        </select>
+
+        <button onclick="resetFilters()" class="reset-button">↻ Reset</button>
+
+        <span id="filterCount" style="margin-left: auto; color: #888; font-size: 0.9em;">
+            Visar {{ units|length }} enheter
+        </span>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <div class="units-list-column">
+            <h2>Enheter ({{ units|length }})</h2>
+
+            <div id="unitList">
+                {% for unit in units %}
+                <div class="unit-list-item" data-unit-id="{{ unit.id }}" data-unit-name="{{ unit.name }}"
+                    data-unit-category="{{ unit.profileGroups[0].category if unit.profileGroups else '' }}"
+                    onclick="openUnitPopupById({{ unit.id }})">
+
+                    <div class="unit-list-name">{{ unit.name }}</div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="unit-list-category">
+                            {{ category_map.get(unit.profileGroups[0].category, '-') if unit.profileGroups else '-' }}
+                        </div>
+
+                        <div class="unit-list-owned" data-unit-id="{{ unit.id }}" data-unit-name="{{ unit.name }}"
+                            onclick="event.stopPropagation(); openEditOwnedFromElement(this);">
+                            Owned: <span id="owned-{{ unit.id }}">0</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+
+        <!-- Mitten: Flex space -->
+        <div class="middle-space">
+            Välj en enhet från listan
+        </div>
+
+        <!-- Höger: Army List -->
+        <div class="army-list-column" id="armyColumn">
+            <!-- Content kommer från updateArmyDisplay() -->
+        </div>
+    </div>
+
+    <!-- Popup Overlay -->
+    <div class="popup-overlay" id="unitPopup">
+        <div class="popup-content" id="popupContent">
+            <button class="popup-close" onclick="closeUnitPopup()">×</button>
+        </div>
+    </div>
+
+    <!-- Edit Owned Modal -->
+    <div class="popup-overlay" id="editOwnedModal" style="z-index: 2000;">
+        <div class="popup-content" style="max-width: 400px;">
+            <button class="popup-close" onclick="closeEditOwned()">×</button>
+
+            <div style="padding: 20px;">
+                <h2 style="color: #4a9eff; margin-bottom: 20px;" id="editUnitName">Enhet</h2>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: flex; align-items: center; cursor: pointer; font-size: 1.1em;">
+                        <input type="checkbox" id="editOwnedCheckbox"
+                            style="margin-right: 10px; width: 20px; height: 20px;">
+                        Jag äger denna enhet
+                    </label>
+                </div>
+
+                <div id="editAmountSection" style="margin-bottom: 20px; display: none;">
+                    <label style="display: block; margin-bottom: 5px; color: #ccc;">Antal:</label>
+                    <input type="number" id="editAmountInput" min="0" max="99" value="1"
+                        style="width: 100%; padding: 8px; font-size: 1.1em; background: #0a0a0a; border: 1px solid #4a9eff; color: #fff; border-radius: 4px;">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 5px; color: #ccc;">Anteckningar:</label>
+                    <textarea id="editNotesInput" rows="3"
+                        style="width: 100%; padding: 8px; background: #0a0a0a; border: 1px solid #4a9eff; color: #fff; border-radius: 4px; resize: vertical;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="saveOwned()"
+                        style="flex: 1; padding: 12px; background: #4a9eff; color: #000; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1em;">
+                        Spara
+                    </button>
+                    <button onclick="closeEditOwned()"
+                        style="flex: 1; padding: 12px; background: #666; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1em;">
+                        Avbryt
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript: Data from Flask -->
+    <script>
+        // Spara all data för JavaScript
+        const unitsData = {{ units| tojson }};
+        const categoryMap = {{ category_map| tojson }};
+        const weaponsById = {{ weapons_by_id| tojson }};
+        const skillsById = {{ skills_by_id| tojson }};
+        const ammoById = {{ ammo_by_id| tojson }};
+        const collectionData = {{ collection| tojson }};
+        const extrasById = {{ extras_by_id| tojson }};
+        const charsById = {{ chars_by_id| tojson }};
+        const equipsById = {{ equips_by_id| tojson }};
+
+        // Se till att units finns
+        if (!collectionData.units) {
+            collectionData.units = {};
+        }
+    </script>
+
+    <script>
+        function changeArmy() {
+            const army = document.getElementById('armySelector').value;
+
+            // Behåll bara army, nollställ resten (enklast + minst buggrisk)
+            window.location.href = `/?army=${encodeURIComponent(army)}`;
+        }
+    </script>
+
+    <!-- JavaScript: External files -->
+    <script src="{{ url_for('static', filename='js/collection.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/units.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/filters.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/army.js') }}"></script>
+
+    <!-- Initialize -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            populateFilterDropdowns();
+            unitsData.forEach(unit => {
+                const span = document.getElementById(`owned-${unit.id}`);
+                if (span) {
+                    span.textContent = getOwnedInfo(unit.id);
+                }
+            });
+
+            applyFilters();
+
+            updateArmyDisplay();
+
+            document.getElementById('editOwnedCheckbox').addEventListener('change', toggleAmountSection);
+        });
+
+        // Stäng popups med ESC
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeUnitPopup();
+                closeEditOwned();
+            }
+        });
+    </script>
+</body>
+
+</html>

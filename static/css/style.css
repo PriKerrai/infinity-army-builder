@@ -1,0 +1,903 @@
+:root {
+    --accent: #4a9eff;
+    /* default */
+    --accent2: #8a8a8a;
+    --bg: #000;
+    --panel: #1a1a1a;
+    --text: #fff;
+}
+
+body.theme-steel {
+    --accent: #f2c200;
+    --accent2: #7a3cff;
+}
+
+body.theme-yujing {
+    --accent: #f31109;
+    --accent2: #ebee26;
+}
+
+body.theme-whitebanner {
+    --accent: #00b881;
+    --accent2: #d31e54;
+}
+
+body.theme-aleph {
+    --accent: #00e1ff;
+    --accent2: #dbe5e7;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #000;
+    color: #fff;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Header */
+.main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.main-header h1 {
+    color: var(--accent);
+    font-size: 1.5em;
+    margin: 0;
+}
+
+/* Main Layout: 3 columns */
+.main-container {
+    display: flex;
+    height: calc(100vh - 70px);
+    position: relative;
+}
+
+
+
+/* Vänster kolumn: Enheter */
+.units-list-column {
+    width: 15%;
+    background: #1a1a1a;
+    border-right: 2px solid #333;
+    overflow-y: auto;
+    padding: 10px;
+    padding-bottom: 70px;
+}
+
+.units-list-column h2 {
+    color: var(--accent);
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #333;
+}
+
+.unit-list-item {
+    padding: 12px 8px;
+    margin-bottom: 5px;
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.unit-list-item:hover {
+    background: #2a2a2a;
+    border-color: var(--accent);
+    transform: translateX(5px);
+}
+
+.unit-list-name {
+    font-weight: bold;
+    font-size: 0.95em;
+    color: #fff;
+    margin-bottom: 3px;
+}
+
+.unit-list-category {
+    font-size: 0.75em;
+    color: #888;
+}
+
+/* Mitten: Flex space */
+.middle-space {
+    flex: 1;
+    background: #0a0a0a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    font-size: 1.2em;
+}
+
+/* Höger kolumn: Army List */
+.army-list-column {
+    width: 40%;
+    background: #1a1a1a;
+    border-left: 2px solid #333;
+    overflow-y: auto;
+}
+
+.army-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.army-picker select {
+    background: #0a0a0a;
+    color: #fff;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+/* Popup Overlay (täcker bara mitten) */
+.popup-overlay {
+    display: none;
+    position: fixed;
+    top: 110px;
+    left: 15%;
+    right: 40%;
+    bottom: 0;
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.popup-overlay.active {
+    display: block;
+}
+
+/* Popup Content */
+.popup-content {
+    background: #1a1a1a;
+    border: 3px solid var(--accent);
+    border-radius: 12px;
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(74, 158, 255, 0.5);
+}
+
+/* Close button */
+.popup-close {
+    position: absolute;
+    top: 45px;
+    right: 15px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    font-size: 1.5em;
+    cursor: pointer;
+    font-weight: bold;
+    z-index: 10;
+    transition: all 0.2s;
+}
+
+.popup-close:hover {
+    background: #ff4a4a;
+    transform: rotate(90deg);
+}
+
+/* Unit card styles (komprimerad version) */
+.unit-top-bar {
+    background: #000;
+    padding: 8px 15px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--accent);
+    font-size: 0.85em;
+    border-radius: 8px 8px 0 0;
+}
+
+.unit-header {
+    background: linear-gradient(to bottom, #8a8a8a, #5a5a5a);
+    padding: 12px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.unit-logo-circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #fff;
+    padding: 5px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.unit-logo-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.unit-header-content {
+    flex: 1;
+}
+
+.unit-name-header {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #fff;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.stats-row {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.stat-item {
+    flex: 1;
+    text-align: center;
+    border-right: 1px solid #666;
+}
+
+.stat-item:last-child {
+    border-right: none;
+}
+
+.stat-label {
+    background: rgba(0, 0, 0, 0.4);
+    font-size: 0.65em;
+    font-weight: bold;
+    padding: 2px;
+    color: #ccc;
+}
+
+.stat-value {
+    font-size: 1em;
+    font-weight: bold;
+    padding: 4px 2px;
+    color: #fff;
+}
+
+.special-skills {
+    margin-top: 6px;
+    padding: 6px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    font-size: 0.70em;
+}
+
+.special-skills strong {
+    color: var(--accent);
+}
+
+.unit-body {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    background: #000;
+}
+
+.unit-miniature {
+    width: 130px;
+    flex-shrink: 0;
+}
+
+.unit-miniature img {
+    width: 100%;
+    border: 2px solid #333;
+    border-radius: 4px;
+}
+
+.loadouts-table {
+    flex: 1;
+}
+
+.loadouts-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+}
+
+.loadouts-table th {
+    background: #2a2a2a;
+    padding: 6px;
+    text-align: left;
+    border: 1px solid #444;
+    font-weight: bold;
+    color: var(--accent);
+    font-size: 0.85em;
+}
+
+.loadouts-table td {
+    padding: 6px;
+    border: 1px solid #444;
+    background: #1a1a1a;
+    font-size: 0.85em;
+}
+
+.loadouts-table tr:hover td {
+    background: #2a2a2a;
+    cursor: pointer;
+}
+
+.swc-cost {
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #6ab8ff;
+}
+
+/* Filter Bar */
+.filter-bar {
+    background: #1a1a1a;
+    border-bottom: 2px solid #333;
+    padding: 12px 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-bar input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+    padding: 8px 12px;
+    background: #0a0a0a;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.95em;
+}
+
+.filter-bar input[type="text"]:focus {
+    outline: none;
+    border-color: #6ab8ff;
+    box-shadow: 0 0 8px rgba(74, 158, 255, 0.3);
+}
+
+.filter-bar select {
+    padding: 8px 12px;
+    background: #0a0a0a;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.9em;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+.filter-bar select:focus {
+    outline: none;
+    border-color: #6ab8ff;
+}
+
+.filter-bar .reset-button {
+    padding: 8px 16px;
+    background: #666;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background 0.2s;
+}
+
+.filter-bar .reset-button:hover {
+    background: #888;
+}
+
+/* Hide filtered items */
+.unit-list-item.filtered-hidden {
+    display: none;
+}
+
+/* Army List Styling */
+.army-header {
+    padding: 1px 6px 6px 2px;
+    background: #1a1a1a;
+    border-bottom: 2px solid var(--accent);
+}
+
+.army-header h2 {
+    color: var(--accent);
+    font-size: 1.1em;
+    margin-bottom: 6px;
+}
+
+.army-limits {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.army-limit-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.army-limit-row select {
+    padding: 6px 10px;
+    background: #0a0a0a;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.9em;
+    cursor: pointer;
+}
+
+.army-stats {
+    font-size: 0.95em;
+    color: #ccc;
+}
+
+.army-stats.over-limit {
+    color: #ff4a4a;
+    font-weight: bold;
+}
+
+.army-stats.warning {
+    color: #ffaa00;
+}
+
+.progress-container {
+    width: 100%;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s, background 0.3s;
+}
+
+.progress-bar.warning {
+    background: #ffaa00;
+}
+
+.progress-bar.over {
+    background: #ff4a4a;
+}
+
+.combat-group {
+    margin: 15px;
+    background: #0a0a0a;
+    border: 2px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.combat-group-header {
+    background: #1a1a1a;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--accent);
+    cursor: pointer;
+}
+
+.combat-group-header:hover {
+    background: #2a2a2a;
+}
+
+.combat-group-title {
+    font-weight: bold;
+    color: var(--accent);
+    font-size: 1em;
+}
+
+.combat-group-count {
+    color: #888;
+    font-size: 0.85em;
+}
+
+.combat-group-units {
+    padding: 10px;
+}
+
+.army-unit {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+}
+
+.army-unit:hover {
+    border-color: var(--accent);
+    background: #2a2a2a;
+}
+
+.army-unit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.army-unit-name {
+    font-weight: bold;
+    color: var(--accent);
+    font-size: 0.95em;
+}
+
+.army-unit-remove {
+    background: #ff4a4a;
+    color: #fff;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9em;
+    transition: background 0.2s;
+}
+
+.army-unit-remove:hover {
+    background: #ff6666;
+}
+
+.army-unit-loadout {
+    font-size: 0.85em;
+    color: #888;
+    margin-bottom: 6px;
+}
+
+.army-unit-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+.army-empty {
+    color: #666;
+    text-align: center;
+    padding: 50px 20px;
+    font-style: italic;
+}
+
+.army-actions {
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+    border-top: 2px solid #333;
+}
+
+.army-button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: all 0.2s;
+}
+
+.army-button.save {
+    background: var(--accent);
+    color: #000;
+}
+
+.army-button.save:hover {
+    background: #6ab8ff;
+}
+
+.army-button.export {
+    background: #666;
+    color: #fff;
+}
+
+.army-button.export:hover {
+    background: #888;
+}
+
+/* === Refactor helpers === */
+.unit-sep {
+    border: 2px solid var(--accent);
+    margin: 20px 0;
+}
+
+.section-title {
+    color: var(--accent);
+    margin-bottom: 10px;
+    font-size: 1em;
+}
+
+.spacer {
+    height: 20px;
+}
+
+.muted {
+    color: #888;
+    font-size: 0.85em;
+}
+
+.tiny {
+    font-size: 0.75em;
+}
+
+.center {
+    text-align: center;
+}
+
+/* Owned hover (flytta från inline) */
+.unit-list-owned {
+    font-size: 0.7em;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.unit-list-owned:hover {
+    color: var(--accent);
+}
+
+/* Army table (no inline styles) */
+.army-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+}
+
+.army-table thead tr {
+    background: #2a2a2a;
+    border-bottom: 2px solid var(--accent);
+}
+
+.army-table th {
+    padding: 6px;
+    text-align: left;
+    color: var(--accent);
+    font-size: 0.85em;
+}
+
+.army-table th.num {
+    text-align: center;
+    width: 60px;
+}
+
+.army-table td {
+    padding: 4px 6px;
+    border-bottom: 1px solid #333;
+    background: #1a1a1a;
+}
+
+.army-row:hover td {
+    background: #2a2a2a;
+}
+
+.army-cell-title {
+    font-weight: bold;
+    color: var(--accent);
+    margin-bottom: 2px;
+}
+
+.army-cell-sub {
+    font-size: 0.9em;
+    color: #fff;
+}
+
+.army-cell {
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+.num {
+    text-align: center;
+}
+
+.army-remove-btn {
+    background: #ff4a4a;
+    color: #fff;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.army-remove-btn:hover {
+    background: #ff6666;
+}
+
+/* Loadout table clickable rows */
+.loadout-table tr:hover td {
+    background: #2a2a2a;
+    cursor: pointer;
+}
+
+.characteristics-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.char-badge {
+    background: rgba(74, 158, 255, 0.2);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 0.75em;
+    color: var(--accent);
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.characteristics-row {
+    margin-top: 8px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.char-icon {
+    width: 22px;
+    height: 22px;
+    display: block;
+    border: 0;
+    outline: 0;
+    box-shadow: none;
+}
+
+.order-icon {
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    margin-right: 2px;
+}
+
+.lt-badge {
+    background: var(--accent);
+    color: #000;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7em;
+    margin-left: 6px;
+    font-weight: bold;
+}
+
+.army-row-child td:first-child {
+    background: #0f0f0f !important;
+    padding-left: 22px;
+    opacity: 0.9;
+}
+
+.army-row-child .army-cell-sub::before {
+    content: "↳ ";
+    opacity: 0.6;
+}
+
+/* Muted text (för || KARKATA labels) */
+.muted {
+    color: #888 !important;
+    font-size: 0.85em;
+}
+
+.army-skill-line {
+    font-size: 0.85em;
+    opacity: 0.75;
+    margin-top: 2px;
+    line-height: 1.2;
+}
+
+.disabled-row {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.disabled-row:hover {
+    background: inherit;
+}
+
+.army-bars-row {
+    display: flex;
+    gap: 12px;
+}
+
+.army-bar-block {
+    flex: 1;
+}
+
+.army-bar-label {
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.limit-row-inline {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.limit-select {
+    width: auto;
+    min-width: 110px;
+}
+
+.army-lt-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    white-space: nowrap;
+    min-height: 44px;
+}
+
+.lt-ok {
+    color: #0f0;
+}
+
+.lt-missing {
+    color: #ff4444;
+}
+
+.unit-list-owned {
+    font-size: 0.8em;
+    color: #4caf50;
+    /* grön om ägd */
+}
+
+.unit-list-owned.not-owned {
+    color: #555;
+    /* grå om inte ägd */
+}
+
+.unit-list-item.is-owned {
+    border-left: 3px solid #4caf50;
+}
+
+.unit-list-item.not-owned {
+    border-left: 3px solid #333;
+}
