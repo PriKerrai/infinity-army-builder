@@ -1,4 +1,3 @@
-// Collection/Owned management
 let currentEditingUnitId = null;
 
 function ensureCollectionShape() {
@@ -76,7 +75,6 @@ async function saveOwned() {
             return;
         }
 
-        // uppdatera client state
         collectionData.units[currentEditingUnitId] = {
             ...(collectionData.units[currentEditingUnitId] || {}),
             owned,
@@ -84,13 +82,11 @@ async function saveOwned() {
             notes,
         };
 
-        // uppdatera UI
         const span = document.getElementById(`owned-${currentEditingUnitId}`);
         if (span) span.textContent = String(owned ? amount : 0);
 
         closeEditOwned();
 
-        // om du vill: direkt re-filter (så “owned-only” uppdateras)
         if (typeof applyFilters === "function") applyFilters();
     } catch (error) {
         alert("Fel vid sparande: " + error);

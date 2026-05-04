@@ -6,7 +6,12 @@ function byId(id) {
 
 function formatMove(move) {
     if (!move || move.length < 2) return "-";
-    return `${move[0]}-${move[1]}`;
+    return `${cmToInch(move[0])}-${cmToInch(move[1])}"`;
+}
+
+function cmToInch(cm) {
+    if (cm === null || cm === undefined) return "-";
+    return Math.round(cm / 2.5);
 }
 
 function getEquipNames(equipList) {
@@ -16,7 +21,7 @@ function getEquipNames(equipList) {
     return equipList.map(e => {
         const base = equipsById?.[e.id]?.name || `Equip ${e.id}`;
         const extras = (e.extra ?? [])
-            .map(x => extrasById?.[x]?.name || `+${x}`)
+            .map(x => formatExtraName(extrasById?.[x]) || `+${x}`)
             .filter(Boolean);
         return extras.length ? `${base} (${extras.join(", ")})` : base;
     }).join(", ");
@@ -31,7 +36,7 @@ function getSkillNames(profile) {
             const skill = skillsById?.[s.id];
             const baseName = skill?.name || `Skill ${s.id}`;
             const extras = (s.extra ?? [])
-                .map(extraId => extrasById?.[extraId]?.name)
+                .map(extraId => formatExtraName(extrasById?.[extraId]))
                 .filter(Boolean);
             return extras.length ? `${baseName} (${extras.join(", ")})` : baseName;
         })
@@ -64,7 +69,7 @@ function renderSkillsInline(profile) {
 
 function weaponExtrasText(w) {
     const extras = (w?.extra ?? [])
-        .map(id => extrasById?.[id]?.name)
+        .map(id => formatExtraName(extrasById?.[id]))
         .filter(Boolean);
 
     return extras.length ? ` (${extras.join(", ")})` : "";
@@ -87,6 +92,18 @@ function isMeleeOrSidearm(weapon) {
     if (n.includes("pistol")) return true; // pistol/ heavy pistol / breaker pistol osv
 
     return false;
+}
+
+function formatExtraName(extra) {
+    if (!extra) return "";
+    if (extra.type === "DISTANCE") {
+        const num = parseFloat(extra.name);
+        if (!isNaN(num)) {
+            const inches = Math.round(num / 2.5);
+            return num > 0 ? `+${inches}"` : `${inches}"`;
+        }
+    }
+    return extra.name;
 }
 
 function getWeaponNames(weaponsList) {
@@ -120,7 +137,7 @@ function namesFromIds(list, dict) {
         .filter(Boolean);
 }
 
-// plocka “Forward Observer”, “Paramedic”, “Engineer” ur option.name om de står där
+
 function parseRoleTokens(optionName) {
     const s = optionName || "";
     const tokens = [];
@@ -137,17 +154,17 @@ function parseRoleTokens(optionName) {
 function renderOptionTraits(option) {
     const parts = [];
 
-    // 1) från option.name (roller/varianter)
+
     parts.push(...parseRoleTokens(option?.name));
 
-    // 2) skills
+
     parts.push(...namesFromIds(option?.skills, skillsById));
 
-    // 3) equips (t.ex. Hacking Device)
-    parts.push(...namesFromIds(option?.equip, extrasById)); // många “equip” ligger i extras
-    parts.push(...namesFromIds(option?.equip, skillsById)); // ibland är det skill-id istället
 
-    // dedupe + snyggt
+    parts.push(...namesFromIds(option?.equip, equipsById));
+    parts.push(...namesFromIds(option?.equip, skillsById));
+
+
     const uniq = Array.from(new Set(parts.map(p => p.trim()).filter(Boolean)));
 
     return uniq.length ? `<div class="army-skill-line">${uniq.join(", ")}</div>` : "";
@@ -223,7 +240,7 @@ function renderOptionSkillsFull(optionSkills) {
             const baseName = skill?.name || `Skill ${s.id}`;
 
             const extras = (s.extra ?? [])
-                .map(extraId => extrasById?.[extraId]?.name)
+                .map(extraId => formatExtraName(extrasById?.[extraId]))
                 .filter(Boolean);
 
             return extras.length ? `${baseName} (${extras.join(", ")})` : baseName;
@@ -310,7 +327,7 @@ function getHighlightClass(option) {
 function renderLoadoutTablesForGroup(unit, groupIndex) {
     let html = "";
 
-    // Root bundles ska bara synas på huvudkortet (groupIndex 0)
+
     if (groupIndex === 0 && unit.options?.length) {
         html += `
       <h3 class="section-title">Combined Loadouts</h3>
@@ -357,7 +374,7 @@ function renderLoadoutTablesForGroup(unit, groupIndex) {
     `;
     }
 
-    // Rendera bara den specifika profileGroupen
+
     const pg = unit.profileGroups?.[groupIndex];
     if (!pg?.options?.length) return html;
 
@@ -414,10 +431,10 @@ function openUnitPopupById(unitId) {
 
             const category = categoryMap[pg.category] || "-";
 
-            // 1) Stats-kortet (så bots får sina stats)
+
             html += renderProfileCard(unit, pg, profile, category, groupIndex);
 
-            // 2) Loadouts för JUST den gruppen, direkt under rätt kort
+
             html += `
         <div class="loadouts-table">
           ${renderLoadoutTablesForGroup(unit, groupIndex)}

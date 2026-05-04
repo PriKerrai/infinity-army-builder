@@ -431,10 +431,11 @@ function updateArmyDisplay() {
 
     html += `
     <div class="army-actions">
-      <button class="army-button save" onclick="saveArmyList()">💾 Save List</button>
-      <button class="army-button export" onclick="exportArmyList()">📤 Export</button>
+        <button class="army-button save" onclick="saveArmyList()">💾 Save List</button>
+        <button class="army-button export" onclick="exportArmyList()">📋 Full Export</button>
+        <button class="army-button export" onclick="exportTournamentList()">🏆 Tournament Export</button>
     </div>
-  `;
+    `;
 
     container.innerHTML = html;
 }
@@ -462,6 +463,129 @@ function saveArmyList() {
     alert("Save functionality kommer snart!");
 }
 
+function buildExportHtml(tournamentMode) {
+    const { totalPoints, totalSwc } = calcTotals();
+    const armyName = document.getElementById("armySelector")?.selectedOptions[0]?.text || "Army";
+    const privateSkills = /lieutenant|chain of command|counterintelligence|holoprojector|holoecho|parachutist|combat jump|hidden deployment/i;
+
+    let html = `
+    <html><head><title>${armyName} - ${tournamentMode ? "Tournament List" : "Full List"}</title>
+    <style>
+        body { font-family: monospace; padding: 20px; color: #000; }
+        h1 { font-size: 1.2em; border-bottom: 2px solid #000; padding-bottom: 5px; }
+        h2 { font-size: 1em; margin: 20px 0 5px; border-bottom: 1px solid #ccc; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th { text-align: left; border-bottom: 1px solid #000; padding: 4px; font-size: 0.85em; }
+        td { padding: 4px; font-size: 0.85em; vertical-align: top; }
+        .sub { color: #555; font-size: 0.8em; }
+        .total { font-weight: bold; border-top: 2px solid #000; }
+        @media print { button { display: none; } }
+    </style>
+    </head><body>
+    <button onclick="window.print()">🖨️ Skriv ut</button>
+    <h1>${armyName} — ${totalPoints}pts / ${totalSwc.toFixed(1)} SWC</h1>
+    <p><em>${tournamentMode ? "Tournament List – private info hidden" : "Full List"}</em></p>
+    `;
+
+    combatGroups.forEach(cg => {
+        if (!groupHasTroopers(cg)) return;
+
+        html += `<h2>${cg.name}</h2>
+        <table>
+            <thead><tr>
+                <th>Enhet</th>
+                <th>Vapen</th>
+                <th>Melee</th>
+                <th>SWC</th>
+                <th>C</th>
+            </tr></thead><tbody>`;
+
+        cg.units.forEach(u => {
+            if (u.isChild) return;
+
+            const unitData = unitsData.find(x => x.id === u.unitId);
+            const profile = unitData?.profileGroups?.[0]?.profiles?.[0];
+            const weapons = getWeaponNames(u.weapons);
+            const melee = getMeleeWeapons(u.weapons);
+
+            const profileSkillNames = (profile?.skills ?? [])
+                .map(s => skillsById?.[s.id]?.name || "")
+                .filter(Boolean);
+
+            const PRIVATE_SKILL_IDS = new Set([35, 238, 29, 26, 207]); // Combat Jump, Hidden Deployment, Camouflage, Chain of Command, Counterintelligence
+            const PRIVATE_EQUIP_IDS = new Set([24]); // Holomask
+
+            // Döljer hela enheten om den har dessa
+            const hasPrivateProfileSkill = tournamentMode && (
+                (profile?.skills ?? []).some(s => PRIVATE_SKILL_IDS.has(s.id)) ||
+                (profile?.equip ?? []).some(e => PRIVATE_EQUIP_IDS.has(e.id)) ||
+                (u.skills ?? []).some(s => PRIVATE_SKILL_IDS.has(s.id))
+            );
+
+            if (hasPrivateProfileSkill) return;
+
+            // Lieutenant filtreras bara bort från traits-texten
+            const PRIVATE_TRAIT_IDS = new Set([119]); // Lieutenant
+
+            const cleanTraits = tournamentMode
+                ? (u.skills || [])
+                    .filter(s => !PRIVATE_TRAIT_IDS.has(s.id))
+                    .map(s => skillsById?.[s.id]?.name)
+                    .filter(Boolean)
+                    .join(", ")
+                : u.traitsText || "";
+
+            if (hasPrivateProfileSkill) return;
+
+            const statsHtml = profile ? `<div class="sub">
+                MOV ${formatMove(profile.move)} | 
+                CC ${profile.cc ?? "-"} | 
+                BS ${profile.bs ?? "-"} | 
+                PH ${profile.ph ?? "-"} | 
+                WIP ${profile.wip ?? "-"} | 
+                ARM ${profile.arm ?? "-"} | 
+                BTS ${profile.bts ?? "-"} | 
+                W ${profile.w ?? "-"} | 
+                S ${profile.s ?? "-"}
+            </div>` : "";
+
+            html += `<tr>
+                <td>
+                    ${u.optionName}
+                    ${statsHtml}
+                    ${cleanTraits ? `<div class="sub">${cleanTraits}</div>` : ""}
+                </td>
+                <td>${weapons}</td>
+                <td>${melee}</td>
+                <td>${tournamentMode ? "-" : u.swc}</td>
+                <td>${tournamentMode ? "-" : u.points}</td>
+            </tr>`;
+        });
+
+        html += `</tbody></table>`;
+    });
+
+    html += `
+    <table><tbody>
+        <tr class="total">
+            <td colspan="3">TOTALT</td>
+            <td>${totalSwc.toFixed(1)}</td>
+            <td>${totalPoints}</td>
+        </tr>
+    </tbody></table>
+    </body></html>`;
+
+    return html;
+}
+
 function exportArmyList() {
-    alert("Export functionality kommer snart!");
+    const win = window.open("", "_blank");
+    win.document.write(buildExportHtml(false));
+    win.document.close();
+}
+
+function exportTournamentList() {
+    const win = window.open("", "_blank");
+    win.document.write(buildExportHtml(true));
+    win.document.close();
 }

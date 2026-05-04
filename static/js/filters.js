@@ -1,5 +1,4 @@
 function getActiveUnitsData() {
-  // unitsData kommer från template <script>const unitsData = ...</script>
   return (window.unitsDataForSelectedArmy ?? unitsData ?? []);
 }
 
@@ -43,7 +42,6 @@ function buildUnitRow(u) {
     openEditOwnedFromElement(ownedEl);
   });
 
-  // fyll owned direkt om funktionen finns
   const span = el.querySelector(`#owned-${u.id}`);
   if (span && typeof getOwnedInfo === "function") span.textContent = getOwnedInfo(u.id);
 
