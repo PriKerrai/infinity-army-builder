@@ -34,6 +34,18 @@ function openEditOwned(unitId, unitName) {
     document.getElementById("editNotesInput").value = info.notes || "";
 
     toggleAmountSection();
+    const imageSection = document.getElementById("editImageSection");
+    const currentImg = document.getElementById("editCurrentImage");
+    const currentImage = info.customImage || null;
+    if (imageSection) imageSection.style.display = "block";
+    if (currentImg) {
+        if (currentImage) {
+            currentImg.src = currentImage;
+            currentImg.style.display = "block";
+        } else {
+            currentImg.style.display = "none";
+        }
+    }
     document.getElementById("editOwnedModal").classList.add("active");
 }
 
@@ -86,6 +98,20 @@ async function saveOwned() {
         if (span) span.textContent = String(owned ? amount : 0);
 
         closeEditOwned();
+
+        const imageInput = document.getElementById("editImageInput");
+        if (imageInput && imageInput.files[0]) {
+            const formData = new FormData();
+            formData.append("unitId", currentEditingUnitId);
+            formData.append("image", imageInput.files[0]);
+            const imgRes = await fetch("/upload_unit_image", { method: "POST", body: formData });
+            const imgResult = await imgRes.json();
+            if (imgResult.success) {
+                collectionData.units[currentEditingUnitId].customImage = imgResult.imageUrl;
+                const currentImg = document.getElementById("editCurrentImage");
+                if (currentImg) { currentImg.src = imgResult.imageUrl; currentImg.style.display = "block"; }
+            }
+        }
 
         if (typeof applyFilters === "function") applyFilters();
     } catch (error) {

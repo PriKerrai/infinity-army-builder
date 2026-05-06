@@ -254,6 +254,15 @@ function renderOptionSkillsFull(optionSkills) {
 
 
 function renderProfileCard(unit, pg, profile, category, groupIndex) {
+    const unitCollection = collectionData?.units?.[String(unit.id)];
+    const customImage = unitCollection?.customImage || null;
+
+    const logoHtml = customImage
+        ? `<img src="${customImage}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`
+        : (profile.logo
+            ? `<img src="${profile.logo}" style="max-width:60px; max-height:60px;">`
+            : `<span style="font-size:2em;">⚔️</span>`);
+
     return `
     ${groupIndex > 0 ? '<hr class="unit-sep">' : ""}
 
@@ -264,7 +273,7 @@ function renderProfileCard(unit, pg, profile, category, groupIndex) {
 
     <div class="unit-header">
       <div class="unit-logo-circle">
-        ${profile.logo ? `<img src="${profile.logo}" alt="${pg.isc}">` : ""}
+        ${logoHtml}
       </div>
 
       <div class="unit-header-content">

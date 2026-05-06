@@ -7,6 +7,8 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
+UPLOAD_DIR = os.path.join(BASE_DIR, "static", "unit_images")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 ARMY_FILES = {
     "aleph": "aleph_units.json",
@@ -50,7 +52,12 @@ def filter_units_for_army(units, army_key):
 # --- Load data once at startup ---
 data = load_json("infinity_data.json")
 units_data = load_json("steel_phalanx_units.json")
-collection = load_json("collection.json")
+
+try:
+    collection = load_json("collection.json")
+except FileNotFoundError:
+    collection = {"units": {}}
+    save_json("collection.json", collection)
 
 factions = data.get("factions", [])
 weapons = data.get("weapons", [])
@@ -139,6 +146,41 @@ def update_owned():
     except Exception as e:
         print(f"ERROR in update_owned: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+    
+@app.route("/upload_unit_image", methods=["POST"])
+def upload_unit_image():
+    try:
+        unit_id = str(request.form.get("unitId", ""))
+        file = request.files.get("image")
+        if not unit_id or not file:
+            return jsonify({"success": False, "error": "Saknar unitId eller fil"}), 400
+
+        # Tillåt bara vanliga bildformat
+        allowed = {"jpg", "jpeg", "png", "gif", "webp"}
+        ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+        if ext not in allowed:
+            return jsonify({"success": False, "error": "Ogiltigt filformat"}), 400
+
+        filename = f"unit_{unit_id}.{ext}"
+        filepath = os.path.join(UPLOAD_DIR, filename)
+        file.save(filepath)
+
+        image_url = f"/static/unit_images/{filename}"
+
+        collection_data = load_json("collection.json")
+        if "units" not in collection_data:
+            collection_data["units"] = {}
+        existing = collection_data["units"].get(unit_id, {})
+        existing["customImage"] = image_url
+        collection_data["units"][unit_id] = existing
+        save_json("collection.json", collection_data)
+
+        global collection
+        collection = collection_data
+
+        return jsonify({"success": True, "imageUrl": image_url})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500  
 
 if __name__ == "__main__":
     app.run(debug=True)
